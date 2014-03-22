@@ -4,12 +4,15 @@ env:
     - TOX_ENV=py26
     - TOX_ENV=py27
     - TOX_ENV=pypy
-    - TOX_ENV=txpostgres
+    - TOX_ENV=txpostgres DATABASE_URI=postgres://postgres@127.0.0.1:5432/travis_ci_test
     - TOX_ENV=docs
     - TOX_ENV=pep8
 
 install:
     - pip install tox
+
+before_script:
+    - if [ ! -z "$DATABASE_URI" ]; then psql -c 'create database travis_ci_test;' -U postgres; fi
 
 script:
     - tox -e $TOX_ENV

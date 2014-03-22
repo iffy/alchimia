@@ -1,3 +1,5 @@
+import os
+
 import sqlalchemy
 from sqlalchemy.engine import RowProxy
 from sqlalchemy.exc import StatementError
@@ -12,17 +14,19 @@ from alchimia.engine import (
 
 from .doubles import FakeThreadedReactor
 
+DATABASE_URI=os.environ.get('DATABASE_URI', 'sqlite://')
+
 
 def create_engine():
     return sqlalchemy.create_engine(
-        "sqlite://", strategy=TWISTED_STRATEGY, reactor=FakeThreadedReactor()
+        DATABASE_URI, strategy=TWISTED_STRATEGY, reactor=FakeThreadedReactor()
     )
 
 
 class TestEngineCreation(object):
     def test_simple_create_engine(self):
         engine = sqlalchemy.create_engine(
-            "sqlite://",
+            DATABASE_URI,
             strategy=TWISTED_STRATEGY,
             reactor=FakeThreadedReactor()
         )
