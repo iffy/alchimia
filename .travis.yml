@@ -4,6 +4,7 @@ env:
     - TOX_ENV=py26
     - TOX_ENV=py27
     - TOX_ENV=pypy
+    - TOX_ENV=txpostgres
     - TOX_ENV=docs
     - TOX_ENV=pep8
 
