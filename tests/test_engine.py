@@ -7,7 +7,7 @@ from sqlalchemy.schema import CreateTable
 
 from twisted.trial import unittest
 
-from alchimia import TWISTED_STRATEGY
+from alchimia import TWISTED_STRATEGY, ASYNC_STRATEGY
 from alchimia.engine import (
     TwistedEngine, TwistedConnection, TwistedTransaction,
 )
@@ -18,8 +18,13 @@ DATABASE_URI=os.environ.get('DATABASE_URI', 'sqlite://')
 
 
 def create_engine():
+    strategy = TWISTED_STRATEGY
+    reactor = FakeThreadedReactor()
+    if DATABASE_URI.count('txpostgres'):
+        strategy = ASYNC_STRATEGY
+        from twisted.internet import reactor
     return sqlalchemy.create_engine(
-        DATABASE_URI, strategy=TWISTED_STRATEGY, reactor=FakeThreadedReactor()
+        DATABASE_URI, strategy=strategy, reactor=reactor,
     )
 
 

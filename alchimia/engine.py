@@ -1,5 +1,8 @@
 from sqlalchemy.engine.base import Engine
+from sqlalchemy.engine.util import _distill_params
+from sqlalchemy import util
 
+from twisted.internet import defer
 from twisted.internet.threads import deferToThreadPool
 
 
@@ -122,3 +125,74 @@ class TwistedResultProxy(object):
     @property
     def rowcount(self):
         return self._result_proxy.rowcount
+
+
+class AsyncEngine(object):
+    def __init__(self, pool, dialect, url, reactor, **kwargs):
+        print 'I am an engine'
+        self._pool = pool
+        self._dialect = dialect
+        self._url = url
+        self._reactor = reactor
+
+    def _connect(self):
+        return self._pool.connect()
+
+    def execute(self, obj, *multiparams, **params):
+        if isinstance(obj, util.string_types[0]):
+            return self._execute_text(obj, multiparams, params)
+        try:
+            meth = object._execute_on_connection
+        except AttributeError:
+            raise exc.InvalidRequestError(
+                                "Unexecutable object type: %s" %
+                                type(object))
+        else:
+            return meth(self, multiparams, params)
+
+    @defer.inlineCallbacks
+    def _execute_text(self, statement, multiparams, params):
+        """
+        Execute a string 
+        """
+        parameters = _distill_params(multiparams, params)
+
+        conn = yield self._connect()
+        result = yield conn.runQuery(statement, parameters)
+        defer.returnValue(result)
+
+    # @property
+    # def dialect(self):
+    #     return self.dialect
+
+    # @property
+    # def _has_events(self):
+    #     return False
+
+    # @property
+    # def _execution_options(self):
+    #     return self._engine._execution_options
+
+    # def _should_log_info(self):
+    #     return self._engine._should_log_info()
+
+    # def connect(self):
+    #     d = self._defer_to_thread(self._engine.connect)
+    #     d.addCallback(TwistedConnection, self)
+    #     return d
+
+    # def execute(self, *args, **kwargs):
+    #     d = self._defer_to_thread(self._engine.execute, *args, **kwargs)
+    #     d.addCallback(TwistedResultProxy, self)
+    #     return d
+
+    # def has_table(self, table_name, schema=None):
+    #     return self._defer_to_thread(
+    #         self._engine.has_table, table_name, schema)
+
+    # def table_names(self, schema=None, connection=None):
+    #     if connection is not None:
+    #         connection = connection._connection
+    #     return self._defer_to_thread(
+    #         self._engine.table_names, schema, connection)
+
